@@ -12,8 +12,8 @@ This repository provides a complete framework of SPERRFY (Koike et al., 2025). I
 | `main_script.m` | Main pipeline for running real mouse connectome analysis and null model evaluation |
 | `demonstrations.m` | Lightweight demo script that produces main figures (Figure 3–5 and light version of figure 6) |
 | `startup_SPERRFY.m` | Path setup script for MATLAB |
-|`+src/` | Source code: analysis runners, result containers, null model generators, etc. |
-|`+data/` | Data for analysis: only preprocessed data are published on this github.|
+|`src/` | Source code: analysis runners, result containers, null model generators, etc. |
+|`data/` | Data for analysis: only preprocessed data are published on this github.|
 
 
 
@@ -35,9 +35,16 @@ Use `main_script.m` for a full analysis run. It will take several hours to compl
 ## Requirements
 
 - MATLAB R2024a or newer
-- All `.m` classes and functions under `+SPERRFY/`
-- Processed data `.mat` files
+- All `.m` classes and functions under `src/`
+- Processed data `.mat` files under `data/processed/`
 
 ## Citation
 
 If you use this code, please cite the associated paper (preprint under submission).
+
+
+## License
+
+This code is released under the MIT License.  
+You are free to use, modify, and redistribute it, provided that proper attribution is given.  
+See the [LICENSE](./LICENSE) file for details.
