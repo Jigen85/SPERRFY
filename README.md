@@ -16,8 +16,6 @@ This repository provides a complete framework of SPERRFY (Koike et al., 2025). I
 |`data/` | Data for analysis: only preprocessed data are published on this github.|
 
 
-
-
 ## How to Use
 
 ### 1. **Run demonstration**
@@ -30,13 +28,21 @@ Use `demonstrations.m` to quickly run a smaller version (25 samples per null mod
 Use `main_script.m` for a full analysis run. It will take several hours to complete. This reproduces all the results of (Koike et al., 2025) figures, though there's some dependencies on random numbers. Note thet the signs of the CCA results (e.g. Figure 3e) may be reversed depending on random numbers, though it does not affect the essence of the outcome.
 
 
-
-
 ## Requirements
 
 - MATLAB R2024a or newer
 - All `.m` classes and functions under `src/`
 - Processed data `.mat` files under `data/processed/`
+
+## Associated Publication
+
+This code is associated with the following preprint:
+
+**"Sperrfy the Brain: A Data-Driven Realization of Sperry’s Chemoaffinity Theory in the Neural Connectome"**  
+Jigen Koike et al., bioRxiv, 2025  
+[https://doi.org/10.1101/2025.04.30.651442](https://doi.org/10.1101/2025.04.30.651442)
+
+This manuscript is currently under peer review for journal publication.
 
 ## Citation
 
