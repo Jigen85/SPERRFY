@@ -1,0 +1,177 @@
+classdef RelatedGeneAnalysisResults
+    properties
+        GeneExprLevels GeneExpressionLevels
+        CorrCoefMatrixSource (:,:) double %[#gene, #dimWiringPI]
+        CorrCoefMatrixTarget (:,:) double
+        TopKGeneIndexListsSource (:,:) {mustBeInteger} %[TopK, #dimWiringPI]
+        TopKGeneIndexListsTarget (:,:) {mustBeInteger}
+    end
+
+    methods
+        function obj = RelatedGeneAnalysisResults(geneExprLevels,corrCoeffMatrixSource,corrCoeffMatrixTarget, ...
+                topKGeneIndexListsSource,topKGeneIndexListsTarget)
+            obj.GeneExprLevels = geneExprLevels;
+            obj.CorrCoefMatrixSource = corrCoeffMatrixSource;
+            obj.CorrCoefMatrixTarget = corrCoeffMatrixTarget;
+            obj.TopKGeneIndexListsSource = topKGeneIndexListsSource;
+            obj.TopKGeneIndexListsTarget = topKGeneIndexListsTarget;          
+        end
+
+        function [srcAcronymList,tgtAcronymList] = makeTopAcronymsList(obj)
+            arguments
+                obj RelatedGeneAnalysisResults
+            end
+            DimPI = width(obj.CorrCoefMatrixSource);
+            geneAcronyms = obj.GeneExprLevels.GeneAcronyms;
+            srcAcronymList = strings(size(obj.TopKGeneIndexListsSource));
+            tgtAcronymList = strings(size(obj.TopKGeneIndexListsTarget));
+            for dpi = 1:DimPI
+                srcTopIds = obj.TopKGeneIndexListsSource(:,dpi);
+                tgtTopIds = obj.TopKGeneIndexListsTarget(:,dpi);
+                srcAcronyms = geneAcronyms(srcTopIds);
+                tgtAcronyms = geneAcronyms(tgtTopIds);
+                srcAcronymList(:,dpi) = srcAcronyms;
+                tgtAcronymList(:,dpi) = tgtAcronyms;              
+            end
+        end
+
+        function [srcNameList,tgtNameList] = makeTopNamesList(obj)
+            arguments
+                obj RelatedGeneAnalysisResults
+            end
+            DimPI = width(obj.CorrCoefMatrixSource);
+            geneNames = obj.GeneExprLevels.GeneNames;
+            srcNameList = strings(size(obj.TopKGeneIndexListsSource));
+            tgtNameList = strings(size(obj.TopKGeneIndexListsTarget));
+            for dpi = 1:DimPI
+                srcTopIds = obj.TopKGeneIndexListsSource(:,dpi);
+                tgtTopIds = obj.TopKGeneIndexListsTarget(:,dpi);
+                srcAcronyms = geneNames(srcTopIds);
+                tgtAcronyms = geneNames(tgtTopIds);
+                srcNameList(:,dpi) = srcAcronyms;
+                tgtNameList(:,dpi) = tgtAcronyms;              
+            end
+        end
+
+        function [srcCorrList,tgtCorrList] = makeTopCorrsList(obj)
+            arguments
+                obj RelatedGeneAnalysisResults
+            end
+            DimPI = width(obj.CorrCoefMatrixSource);
+            corrSource = obj.CorrCoefMatrixSource;
+            corrTarget = obj.CorrCoefMatrixTarget;
+            srcCorrList = zeros(size(obj.TopKGeneIndexListsSource));
+            tgtCorrList = zeros(size(obj.TopKGeneIndexListsTarget));
+            for dpi = 1:DimPI
+                srcTopIds = obj.TopKGeneIndexListsSource(:,dpi);
+                tgtTopIds = obj.TopKGeneIndexListsTarget(:,dpi);
+                srcCorrs = corrSource(srcTopIds,dpi);
+                tgtCorrs = corrTarget(tgtTopIds,dpi);
+                srcCorrList(:,dpi) = srcCorrs;
+                tgtCorrList(:,dpi) = tgtCorrs;              
+            end
+        end
+
+
+
+        function [sourceTableList,targetTableList] = makeTopGeneInformationTables(obj,DimPI)
+            arguments(Input)
+                obj RelatedGeneAnalysisResults
+                DimPI (1,1) {mustBeInteger}
+            end
+            sourceTableList = cell(DimPI,1);
+            targetTableList = cell(DimPI,1);
+            columNameList = ["Gene acronym","Gene name", "Similarity score"];
+            [srcAcronymList,tgtAcronymList] = makeTopAcronymsList(obj);
+            [srcNameList,tgtNameList] = makeTopNamesList(obj);
+            [srcCorrList,tgtCorrList] = makeTopCorrsList(obj);
+            for dpi = 1:DimPI  
+                sourceTable = table(srcAcronymList(:,dpi),srcNameList(:,dpi),srcCorrList(:,dpi), ...
+                    'VariableNames',columNameList);
+                targetTable = table(tgtAcronymList(:,dpi),tgtNameList(:,dpi),tgtCorrList(:,dpi), ...
+                    'VariableNames',columNameList);
+                sourceTableList{dpi,1} = sourceTable;
+                targetTableList{dpi,1} = targetTable;
+            end
+        end
+        %}
+
+
+        function [t] = tiledHistogramsGeneCorrCoef(obj,DimShow,options)
+            arguments
+                obj RelatedGeneAnalysisResults
+                DimShow (1,1) {mustBeInteger}
+                options.IsAbs logical = 1;
+            end
+            t = tiledlayout(2,DimShow);
+            title(t,"Gene expression distribution similarity")
+            sourceCorrCoefList = obj.CorrCoefMatrixSource;
+            targetCorrCoefList = obj.CorrCoefMatrixTarget;
+            if options.IsAbs == 1
+                sourceCorrCoefList = abs(sourceCorrCoefList);
+                targetCorrCoefList = abs(targetCorrCoefList);
+                binEdges = 0.0: 0.05:1.0;
+            elseif options.IsAbs == 0
+                binEdges = -1.0:0.05:1.0;
+            end
+            for duv = 1:DimShow
+                nexttile
+                corrCoeffVec = sourceCorrCoefList(:,duv);
+                histogram(corrCoeffVec,binEdges);
+                axis square
+                title(strcat('{PI_s}^{(',num2str(duv),")}"))
+            end
+            for duv = 1:DimShow
+                nexttile
+                corrCoeffVec = targetCorrCoefList(:,duv);
+                histogram(corrCoeffVec,binEdges);
+                axis square
+                title(strcat('{PI_t}^{(',num2str(duv),")}"))
+            end
+        end
+
+        function [t] = tiledImage3DMostCorrelatedGenes(obj,brainSpace3D,brainInfo,DimShow,options)
+            arguments
+                obj RelatedGeneAnalysisResults
+                brainSpace3D BrainSpace3D
+                brainInfo BrainRegionInformation
+                DimShow (1,1) {mustBeInteger}
+                options.SignificantDigits = 3;
+            end
+            t = tiledlayout(2,DimShow);
+            title("distibution of the most correlated genes")
+            geneExpressionMatrix = obj.GeneExprLevels.ExpressionMatrix;
+            [geneAcronymsSource,geneAcronymsTarget] = obj.makeTopAcronymsList;
+            [simScoreSource,simScoreTarget] = obj.makeTopCorrsList;
+            fmt = sprintf('%%.%dg',options.SignificantDigits);
+            for dpi = 1:DimShow
+                ax = nexttile;
+                geneIndex = obj.TopKGeneIndexListsSource(1,dpi);
+                geneDisplayName = geneAcronymsSource(1,dpi);
+                simScore = simScoreSource(1,dpi);
+                regionalGeneExpressionVector = geneExpressionMatrix(:,geneIndex);
+                climWidth = max()
+                Brain3DStructureVisualizer.imageBrainRegionalValuesIn3D(regionalGeneExpressionVector,brainSpace3D,brainInfo, ...
+                    "ParentAxes",ax,"CBarPos","bottom");
+                titleStr = strcat(geneDisplayName," : ",compose(fmt,simScore));
+                title(titleStr);
+            end
+            for dpi = 1:DimShow
+                ax = nexttile;
+                geneIndex = obj.TopKGeneIndexListsTarget(1,dpi);
+                geneDisplayName = geneAcronymsTarget(1,dpi);
+                simScore = simScoreTarget(1,dpi);
+                regionalGeneExpressionVector = geneExpressionMatrix(:,geneIndex);
+                Brain3DStructureVisualizer.imageBrainRegionalValuesIn3D(regionalGeneExpressionVector,brainSpace3D,brainInfo, ...
+                    "ParentAxes",ax,"CBarPos","bottom");
+                titleStr = strcat(geneDisplayName," : ",compose(fmt,simScore));
+                title(titleStr);
+            end
+        end
+
+
+
+
+    end
+
+end

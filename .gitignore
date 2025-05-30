@@ -1,0 +1,5 @@
+results/
+data/raw/
+data/processed/interim/
+src/classes/test/
+src/utils/old_convinience/
